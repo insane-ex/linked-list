@@ -13,3 +13,11 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - `pop_front` and `pop_back` methods for removing elements
+
+## [0.3.0] - 2026-02-03
+
+### Added
+- `is_empty` and `len` methods for inspecting the list
+- `front` and `back` methods for accessing elements
+- `front_mut` and `back_mut` methods for mutable access
+- `contains` method to check if an element is present
