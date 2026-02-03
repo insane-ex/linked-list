@@ -1,7 +1,6 @@
 use std::ptr::NonNull;
 
-#[allow(unused)]
-type Link<T> = Option<NonNull<Node<T>>>;
+pub type Link<T> = Option<NonNull<Node<T>>>;
 
 #[allow(unused)]
 pub struct Node<T> {
