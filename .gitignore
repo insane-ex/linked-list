@@ -1,0 +1,5 @@
+# Build folder
+/target
+
+# Lock file
+Cargo.lock
