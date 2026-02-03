@@ -2,14 +2,12 @@ use std::ptr::NonNull;
 
 pub type Link<T> = Option<NonNull<Node<T>>>;
 
-#[allow(unused)]
 pub struct Node<T> {
     pub previous: Link<T>,
     pub next: Link<T>,
     pub element: T,
 }
 
-#[allow(unused)]
 impl<T> Node<T> {
     pub const fn new(element: T) -> Self {
         Self {
