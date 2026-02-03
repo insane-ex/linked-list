@@ -7,3 +7,5 @@ This is only for educational purposes and to study `unsafe` Rust.
 
 - Push elements to the front (`push_front`)
 - Push elements to the back (`push_back`)
+- Remove elements from the front (`pop_front`)
+- Remove elements from the back (`pop_back`)
