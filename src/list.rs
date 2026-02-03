@@ -94,6 +94,55 @@ impl<T> LinkedList<T> {
 
         Some(popped_element)
     }
+
+    #[must_use]
+    pub const fn is_empty(&self) -> bool {
+        self.size == 0
+    }
+
+    #[must_use]
+    pub const fn len(&self) -> usize {
+        self.size
+    }
+
+    #[must_use]
+    pub fn front(&self) -> Option<&T> {
+        self.head.map(|head| unsafe { &head.as_ref().element })
+    }
+
+    pub fn front_mut(&mut self) -> Option<&mut T> {
+        self.head
+            .map(|mut head| unsafe { &mut head.as_mut().element })
+    }
+
+    #[must_use]
+    pub fn back(&self) -> Option<&T> {
+        self.tail.map(|tail| unsafe { &tail.as_ref().element })
+    }
+
+    pub fn back_mut(&mut self) -> Option<&mut T> {
+        self.tail
+            .map(|mut tail| unsafe { &mut tail.as_mut().element })
+    }
+
+    pub fn contains(&self, element: &T) -> bool
+    where
+        T: PartialEq,
+    {
+        let mut current_node = self.head;
+
+        while let Some(node) = current_node {
+            let node_ref = unsafe { node.as_ref() };
+
+            if node_ref.element == *element {
+                return true;
+            }
+
+            current_node = node_ref.next;
+        }
+
+        false
+    }
 }
 
 impl<T> Default for LinkedList<T> {
@@ -349,5 +398,127 @@ mod tests {
         assert!(list.head.is_none());
         assert!(list.tail.is_none());
         assert_eq!(list.size, 0);
+    }
+
+    #[test]
+    fn test_is_empty_on_empty_list() {
+        let list = LinkedList::<i32>::new();
+
+        assert!(list.is_empty());
+    }
+
+    #[test]
+    fn test_is_empty_on_non_empty_list() {
+        let mut list = LinkedList::<i32>::new();
+
+        list.push_front(1);
+
+        assert!(!list.is_empty());
+    }
+
+    #[test]
+    fn test_len_on_empty_list() {
+        let list = LinkedList::<i32>::new();
+
+        assert_eq!(list.len(), 0);
+    }
+
+    #[test]
+    fn test_len_on_non_empty_list() {
+        let mut list = LinkedList::<i32>::new();
+
+        list.push_front(1);
+
+        assert_eq!(list.len(), 1);
+    }
+
+    #[test]
+    fn test_contains_returns_false() {
+        let list = LinkedList::<i32>::new();
+
+        assert!(!list.contains(&1));
+    }
+
+    #[test]
+    fn test_contains_returns_true() {
+        let mut list = LinkedList::<i32>::new();
+
+        list.push_front(1);
+
+        assert!(list.contains(&1));
+    }
+
+    #[test]
+    fn test_front_on_empty_list() {
+        let list = LinkedList::<i32>::new();
+
+        assert!(list.front().is_none());
+    }
+
+    #[test]
+    fn test_front_on_non_empty_list() {
+        let mut list = LinkedList::<i32>::new();
+
+        list.push_back(10);
+
+        assert_eq!(list.front(), Some(&10));
+    }
+
+    #[test]
+    fn test_front_mut_on_empty_list() {
+        let mut list = LinkedList::<i32>::new();
+
+        assert!(list.front_mut().is_none());
+    }
+
+    #[test]
+    fn test_front_mut_on_non_empty_list() {
+        let mut list = LinkedList::<i32>::new();
+
+        list.push_back(10);
+
+        if let Some(element) = list.front_mut() {
+            *element = 20;
+        }
+
+        assert_eq!(list.front(), Some(&20));
+    }
+
+    #[test]
+    fn test_back_on_empty_list() {
+        let list = LinkedList::<i32>::new();
+
+        assert!(list.back().is_none());
+    }
+
+    #[test]
+    fn test_back_on_non_empty_list() {
+        let mut list = LinkedList::<i32>::new();
+
+        list.push_back(10);
+        list.push_back(30);
+
+        assert_eq!(list.back(), Some(&30));
+    }
+
+    #[test]
+    fn test_back_mut_on_empty_list() {
+        let mut list = LinkedList::<i32>::new();
+
+        assert!(list.back_mut().is_none());
+    }
+
+    #[test]
+    fn test_back_mut_on_non_empty_list() {
+        let mut list = LinkedList::<i32>::new();
+
+        list.push_back(10);
+        list.push_back(30);
+
+        if let Some(element) = list.back_mut() {
+            *element = 50;
+        }
+
+        assert_eq!(list.back(), Some(&50));
     }
 }
