@@ -29,3 +29,26 @@ pub fn allocate_node<T>(node: Node<T>) -> NonNull<Node<T>> {
 pub unsafe fn deallocate_node<T>(node: NonNull<Node<T>>) {
     unsafe { dealloc(node.as_ptr().cast::<u8>(), Layout::new::<Node<T>>()) };
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::node_allocator::deallocate_node;
+
+    use super::{Node, allocate_node};
+
+    #[test]
+    fn test_allocate_node() {
+        let node = Node::new(1);
+        let node_ptr = allocate_node(node);
+
+        unsafe {
+            let node_ref = node_ptr.as_ref();
+
+            assert!(node_ref.previous.is_none());
+            assert!(node_ref.next.is_none());
+            assert_eq!(node_ref.element, 1);
+
+            deallocate_node(node_ptr);
+        }
+    }
+}
