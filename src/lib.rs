@@ -3,3 +3,4 @@
 #![deny(clippy::nursery)]
 
 mod node;
+mod node_allocator;

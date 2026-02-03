@@ -4,10 +4,10 @@ use std::ptr::NonNull;
 type Link<T> = Option<NonNull<Node<T>>>;
 
 #[allow(unused)]
-struct Node<T> {
-    previous: Link<T>,
-    next: Link<T>,
-    element: T,
+pub struct Node<T> {
+    pub previous: Link<T>,
+    pub next: Link<T>,
+    pub element: T,
 }
 
 #[allow(unused)]
