@@ -16,3 +16,10 @@ This is only for educational purposes and to study `unsafe` Rust.
 - Access the front element mutably (`front_mut`)
 - Access the back element mutably (`back_mut`)
 - Check if a specific element exists (`contains`)
+- Clear all elements (`clear`)
+- Reverse the order of elements (`reverse`)
+- Split the list and get resulting lists (`split`)
+- Retain only elements that satisfy a predicate (`retain`)
+- Remove a specific node (`remove_node`) – private method
+- Automatically free all elements when going out of scope (`Drop` trait)
+- Print the list (`Display` trait)
