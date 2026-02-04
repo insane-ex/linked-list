@@ -1,4 +1,8 @@
-use std::ptr::{self};
+use std::{
+    fmt::{self, Display},
+    mem::{self},
+    ptr::{self, NonNull},
+};
 
 use super::{
     node::{Link, Node},
@@ -142,6 +146,130 @@ impl<T> LinkedList<T> {
         }
 
         false
+    }
+
+    pub fn clear(&mut self) {
+        while self.pop_front().is_some() {}
+    }
+
+    pub const fn reverse(&mut self) {
+        if self.is_empty() || self.len() == 1 {
+            return;
+        }
+
+        let mut current_node = self.head;
+
+        while let Some(mut node) = current_node {
+            let next_node = unsafe { node.as_ref().next };
+
+            unsafe {
+                node.as_mut().next = node.as_mut().previous;
+                node.as_mut().previous = next_node;
+            }
+
+            current_node = next_node;
+        }
+
+        mem::swap(&mut self.head, &mut self.tail);
+    }
+
+    #[must_use]
+    pub fn split(self) -> (Self, Self)
+    where
+        T: Clone,
+    {
+        let mid = self.len().div_ceil(2);
+        let mut index: usize = 0;
+        let mut current_node = self.head;
+        let mut first_list = Self::new();
+        let mut second_list = Self::new();
+
+        while let Some(node) = current_node {
+            let node_ref = unsafe { node.as_ref() };
+
+            if index < mid {
+                first_list.push_back(node_ref.element.clone());
+            } else {
+                second_list.push_back(node_ref.element.clone());
+            }
+
+            current_node = node_ref.next;
+            index += 1;
+        }
+
+        (first_list, second_list)
+    }
+
+    fn remove_node(&mut self, node: NonNull<Node<T>>) {
+        unsafe {
+            let previous_node = node.as_ref().previous;
+            let next_node = node.as_ref().next;
+
+            if let Some(mut node) = previous_node {
+                node.as_mut().next = next_node;
+            } else {
+                self.head = next_node;
+            }
+
+            if let Some(mut node) = next_node {
+                node.as_mut().previous = previous_node;
+            } else {
+                self.tail = previous_node;
+            }
+
+            deallocate_node(node);
+        }
+
+        self.size -= 1;
+    }
+
+    pub fn retain<F>(&mut self, predicate: F)
+    where
+        F: Fn(&T) -> bool,
+    {
+        let mut current_node = self.head;
+
+        while let Some(node) = current_node {
+            let next_node = unsafe { node.as_ref().next };
+
+            if !predicate(unsafe { &node.as_ref().element }) {
+                self.remove_node(node);
+            }
+
+            current_node = next_node;
+        }
+    }
+}
+
+impl<T: Display> Display for LinkedList<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.is_empty() {
+            return write!(f, "[]");
+        }
+
+        write!(f, "[")?;
+
+        let mut current_node = self.head;
+
+        while let Some(node) = current_node {
+            let node_ref = unsafe { node.as_ref() };
+
+            if node_ref.next.is_some() {
+                write!(f, "{} <-> ", node_ref.element)?;
+            } else {
+                write!(f, "{}", node_ref.element)?;
+            }
+
+            current_node = node_ref.next;
+        }
+
+        write!(f, "]")
+    }
+}
+
+impl<T> Drop for LinkedList<T> {
+    fn drop(&mut self) {
+        while self.pop_front().is_some() {}
     }
 }
 
@@ -520,5 +648,164 @@ mod tests {
         }
 
         assert_eq!(list.back(), Some(&50));
+    }
+
+    #[test]
+    fn test_list_clear() {
+        let mut list = LinkedList::<i32>::new();
+
+        list.push_front(1);
+        list.clear();
+
+        assert!(list.head.is_none());
+        assert!(list.tail.is_none());
+        assert_eq!(list.size, 0);
+    }
+
+    #[test]
+    fn test_empty_list_display_output() {
+        let list = LinkedList::<i32>::new();
+
+        assert_eq!(format!("{list}"), "[]");
+    }
+
+    #[test]
+    fn test_non_empty_list_display_output() {
+        let mut list = LinkedList::<i32>::new();
+
+        list.push_front(1);
+
+        assert_eq!(format!("{list}"), "[1]");
+
+        list.push_front(2);
+
+        assert_eq!(format!("{list}"), "[2 <-> 1]");
+    }
+
+    #[test]
+    fn test_reverse_non_empty_list() {
+        let mut list = LinkedList::<i32>::new();
+
+        list.push_front(1);
+        list.push_front(2);
+        list.push_front(3);
+        list.reverse();
+
+        assert_eq!(format!("{list}"), "[1 <-> 2 <-> 3]");
+
+        list.reverse();
+
+        assert_eq!(format!("{list}"), "[3 <-> 2 <-> 1]");
+    }
+
+    #[test]
+    fn test_split_list_with_even_size() {
+        let mut list = LinkedList::<i32>::new();
+
+        list.push_back(1);
+        list.push_back(2);
+        list.push_back(3);
+        list.push_back(4);
+
+        let (first_list, second_list) = list.split();
+
+        let mut head_ref = raw_head(&first_list);
+
+        assert!(head_ref.previous.is_none());
+        assert!(head_ref.next.is_some());
+        assert_eq!(head_ref.element, 1);
+
+        assert_eq!(first_list.len(), 2);
+
+        let mut tail_ref = raw_tail(&first_list);
+
+        assert!(tail_ref.previous.is_some());
+        assert!(tail_ref.next.is_none());
+        assert_eq!(tail_ref.element, 2);
+
+        head_ref = raw_head(&second_list);
+
+        assert!(head_ref.previous.is_none());
+        assert!(head_ref.next.is_some());
+        assert_eq!(head_ref.element, 3);
+
+        tail_ref = raw_tail(&second_list);
+
+        assert!(tail_ref.previous.is_some());
+        assert!(tail_ref.next.is_none());
+        assert_eq!(tail_ref.element, 4);
+
+        assert_eq!(second_list.len(), 2);
+    }
+
+    #[test]
+    fn test_split_list_with_odd_size() {
+        let mut list = LinkedList::<i32>::new();
+
+        list.push_back(1);
+        list.push_back(2);
+        list.push_back(3);
+
+        let (first_list, second_list) = list.split();
+
+        assert_eq!(first_list.len(), 2);
+
+        let mut head_ref = raw_head(&first_list);
+
+        assert!(head_ref.previous.is_none());
+        assert!(head_ref.next.is_some());
+        assert_eq!(head_ref.element, 1);
+
+        assert_eq!(first_list.len(), 2);
+
+        let mut tail_ref = raw_tail(&first_list);
+
+        assert!(tail_ref.previous.is_some());
+        assert!(tail_ref.next.is_none());
+        assert_eq!(tail_ref.element, 2);
+
+        head_ref = raw_head(&second_list);
+
+        assert!(head_ref.previous.is_none());
+        assert!(head_ref.next.is_none());
+        assert_eq!(head_ref.element, 3);
+
+        tail_ref = raw_tail(&second_list);
+
+        assert!(tail_ref.previous.is_none());
+        assert!(tail_ref.next.is_none());
+        assert_eq!(tail_ref.element, 3);
+
+        assert_eq!(second_list.len(), 1);
+    }
+
+    #[test]
+    fn test_list_retain_even_elements() {
+        let mut list = LinkedList::<i32>::new();
+
+        list.push_back(1);
+        list.push_back(2);
+        list.push_back(3);
+        list.push_back(4);
+        list.push_back(5);
+        list.push_back(6);
+        list.retain(|x| x % 2 == 0);
+
+        assert_eq!(format!("{list}"), "[2 <-> 4 <-> 6]");
+    }
+
+    #[test]
+    fn test_list_retain_odd_elements() {
+        let mut list = LinkedList::<i32>::new();
+
+        list.push_back(1);
+        list.push_back(2);
+        list.push_back(3);
+        list.push_back(4);
+        list.push_back(5);
+        list.push_back(6);
+        list.retain(|x| x % 2 == 1);
+
+        assert_eq!(format!("{list}"), "[1 <-> 3 <-> 5]");
     }
 }
