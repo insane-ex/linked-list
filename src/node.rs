@@ -23,7 +23,7 @@ mod tests {
     use super::Node;
 
     #[test]
-    fn test_create_node() {
+    fn create_new_node() {
         let node = Node::new(1);
 
         assert!(node.previous.is_none());

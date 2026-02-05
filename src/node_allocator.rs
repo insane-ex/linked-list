@@ -10,18 +10,15 @@ pub fn allocate_node<T>(node: Node<T>) -> NonNull<Node<T>> {
     assert!(mem::size_of::<Node<T>>() != 0);
 
     let layout = Layout::new::<Node<T>>();
+    let raw_ptr = unsafe { alloc(layout).cast::<Node<T>>() };
 
-    let raw_ptr = unsafe {
-        let ptr = alloc(layout).cast::<Node<T>>();
+    assert!(!raw_ptr.is_null());
 
-        assert!(!ptr.is_null());
+    unsafe {
+        ptr::write(raw_ptr, node);
 
-        ptr::write(ptr, node);
-
-        ptr
-    };
-
-    unsafe { NonNull::new_unchecked(raw_ptr) }
+        NonNull::new_unchecked(raw_ptr)
+    }
 }
 
 pub unsafe fn deallocate_node<T>(node: NonNull<Node<T>>) {
@@ -30,12 +27,10 @@ pub unsafe fn deallocate_node<T>(node: NonNull<Node<T>>) {
 
 #[cfg(test)]
 mod tests {
-    use crate::node_allocator::deallocate_node;
-
-    use super::{Node, allocate_node};
+    use super::{Node, allocate_node, deallocate_node};
 
     #[test]
-    fn test_allocate_node() {
+    fn allocate_new_node() {
         let node = Node::new(1);
         let node_ptr = allocate_node(node);
 

@@ -2,6 +2,8 @@
 #![deny(clippy::pedantic)]
 #![deny(clippy::nursery)]
 
-pub mod list;
+mod list;
 mod node;
 mod node_allocator;
+
+pub use list::LinkedList;
