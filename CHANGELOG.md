@@ -34,3 +34,12 @@ All notable changes to this project will be documented in this file.
 - `retain` method to keep only elements that satisfy a predicate
 - Implement `Drop` trait to automatically free the list and its elements
 - Implement `Display` trait for printing the list
+
+## [0.4.1] - 2026-02-05
+
+### Changed
+
+- Refactored tests to improve structure and readability
+- Split tests into behavior-based submodules
+- Standardized test naming
+- Added test utilities to reduce duplicated assertions
