@@ -1,6 +1,6 @@
 use std::{
     fmt::{self, Display},
-    mem::{self},
+    mem,
     ptr::{self, NonNull},
 };
 
@@ -281,531 +281,526 @@ impl<T> Default for LinkedList<T> {
 
 #[cfg(test)]
 mod tests {
-    use super::{LinkedList, Node};
+    use super::{LinkedList, Node, fmt};
 
-    fn raw_head<T>(list: &LinkedList<T>) -> &Node<T> {
-        unsafe { list.head.expect("head should be Some").as_ref() }
-    }
+    mod utils {
+        use super::{LinkedList, Node, fmt};
 
-    fn raw_tail<T>(list: &LinkedList<T>) -> &Node<T> {
-        unsafe { list.tail.expect("tail should be Some").as_ref() }
-    }
-
-    #[test]
-    fn test_create_list() {
-        let list = LinkedList::<i32>::new();
-
-        assert!(list.head.is_none());
-        assert!(list.tail.is_none());
-        assert_eq!(list.size, 0);
-    }
-
-    #[test]
-    fn test_push_front_one_element() {
-        let mut list = LinkedList::<i32>::new();
-
-        list.push_front(1);
-
-        let head_ref = raw_head(&list);
-
-        assert!(head_ref.previous.is_none());
-        assert!(head_ref.next.is_none());
-        assert_eq!(head_ref.element, 1);
-
-        let tail_ref = raw_tail(&list);
-
-        assert!(tail_ref.previous.is_none());
-        assert!(tail_ref.next.is_none());
-        assert_eq!(tail_ref.element, 1);
-
-        assert_eq!(list.size, 1);
-    }
-
-    #[test]
-    fn test_push_front_two_elements() {
-        let mut list = LinkedList::<i32>::new();
-
-        list.push_front(1);
-
-        let mut head_ref = raw_head(&list);
-
-        assert!(head_ref.previous.is_none());
-        assert!(head_ref.next.is_none());
-        assert_eq!(head_ref.element, 1);
-
-        let mut tail_ref = raw_tail(&list);
-
-        assert!(tail_ref.previous.is_none());
-        assert!(tail_ref.next.is_none());
-        assert_eq!(tail_ref.element, 1);
-
-        list.push_front(2);
-
-        head_ref = raw_head(&list);
-
-        assert!(head_ref.previous.is_none());
-        assert!(head_ref.next.is_some());
-        assert_eq!(head_ref.element, 2);
-
-        tail_ref = raw_tail(&list);
-
-        assert!(tail_ref.previous.is_some());
-        assert!(tail_ref.next.is_none());
-        assert_eq!(tail_ref.element, 1);
-
-        assert_eq!(list.size, 2);
-    }
-
-    #[test]
-    fn test_push_back_one_element() {
-        let mut list = LinkedList::<i32>::new();
-
-        list.push_back(1);
-
-        let head_ref = raw_head(&list);
-
-        assert!(head_ref.previous.is_none());
-        assert!(head_ref.next.is_none());
-        assert_eq!(head_ref.element, 1);
-
-        let tail_ref = raw_tail(&list);
-
-        assert!(tail_ref.previous.is_none());
-        assert!(tail_ref.next.is_none());
-        assert_eq!(tail_ref.element, 1);
-
-        assert_eq!(list.size, 1);
-    }
-
-    #[test]
-    fn test_push_back_two_elements() {
-        let mut list = LinkedList::<i32>::new();
-
-        list.push_back(1);
-
-        let mut head_ref = raw_head(&list);
-
-        assert!(head_ref.previous.is_none());
-        assert!(head_ref.next.is_none());
-        assert_eq!(head_ref.element, 1);
-
-        let mut tail_ref = raw_tail(&list);
-
-        assert!(tail_ref.previous.is_none());
-        assert!(tail_ref.next.is_none());
-        assert_eq!(tail_ref.element, 1);
-
-        list.push_back(2);
-
-        head_ref = raw_head(&list);
-
-        assert!(head_ref.previous.is_none());
-        assert!(head_ref.next.is_some());
-        assert_eq!(head_ref.element, 1);
-
-        tail_ref = raw_tail(&list);
-
-        assert!(tail_ref.previous.is_some());
-        assert!(tail_ref.next.is_none());
-        assert_eq!(tail_ref.element, 2);
-
-        assert_eq!(list.size, 2);
-    }
-
-    #[test]
-    fn test_pop_front_empty_list() {
-        let mut list = LinkedList::<i32>::new();
-
-        assert!(list.pop_front().is_none());
-        assert_eq!(list.size, 0);
-    }
-
-    #[test]
-    fn test_pop_front_one_element() {
-        let mut list = LinkedList::<i32>::new();
-
-        list.push_front(1);
-
-        let popped_element = list.pop_front();
-
-        assert!(popped_element.is_some());
-        assert_eq!(popped_element.unwrap(), 1);
-
-        assert!(list.head.is_none());
-        assert!(list.tail.is_none());
-        assert_eq!(list.size, 0);
-    }
-
-    #[test]
-    fn test_pop_front_two_elements() {
-        let mut list = LinkedList::<i32>::new();
-
-        list.push_front(1);
-        list.push_front(2);
-
-        let first_pop = list.pop_front();
-
-        assert!(first_pop.is_some());
-        assert_eq!(first_pop.unwrap(), 2);
-
-        let head_ref = raw_head(&list);
-
-        assert!(head_ref.previous.is_none());
-        assert!(head_ref.next.is_none());
-        assert_eq!(head_ref.element, 1);
-
-        let tail_ref = raw_tail(&list);
-
-        assert!(tail_ref.previous.is_none());
-        assert!(tail_ref.next.is_none());
-        assert_eq!(tail_ref.element, 1);
-
-        let second_pop = list.pop_front();
-
-        assert!(second_pop.is_some());
-        assert_eq!(second_pop.unwrap(), 1);
-
-        assert!(list.head.is_none());
-        assert!(list.tail.is_none());
-        assert_eq!(list.size, 0);
-    }
-
-    #[test]
-    fn test_pop_back_empty_list() {
-        let mut list = LinkedList::<i32>::new();
-
-        assert!(list.pop_back().is_none());
-        assert_eq!(list.size, 0);
-    }
-
-    #[test]
-    fn test_pop_back_one_element() {
-        let mut list = LinkedList::<i32>::new();
-
-        list.push_front(1);
-
-        let popped_element = list.pop_back();
-
-        assert!(popped_element.is_some());
-        assert_eq!(popped_element.unwrap(), 1);
-
-        assert!(list.head.is_none());
-        assert!(list.tail.is_none());
-        assert_eq!(list.size, 0);
-    }
-
-    #[test]
-    fn test_pop_back_two_elements() {
-        let mut list = LinkedList::<i32>::new();
-
-        list.push_back(1);
-        list.push_back(2);
-
-        let first_pop = list.pop_back();
-
-        assert!(first_pop.is_some());
-        assert_eq!(first_pop.unwrap(), 2);
-
-        let head_ref = raw_head(&list);
-
-        assert!(head_ref.previous.is_none());
-        assert!(head_ref.next.is_none());
-        assert_eq!(head_ref.element, 1);
-
-        let tail_ref = raw_tail(&list);
-
-        assert!(tail_ref.previous.is_none());
-        assert!(tail_ref.next.is_none());
-        assert_eq!(tail_ref.element, 1);
-
-        let second_pop = list.pop_back();
-
-        assert!(second_pop.is_some());
-        assert_eq!(second_pop.unwrap(), 1);
-
-        assert!(list.head.is_none());
-        assert!(list.tail.is_none());
-        assert_eq!(list.size, 0);
-    }
-
-    #[test]
-    fn test_is_empty_on_empty_list() {
-        let list = LinkedList::<i32>::new();
-
-        assert!(list.is_empty());
-    }
-
-    #[test]
-    fn test_is_empty_on_non_empty_list() {
-        let mut list = LinkedList::<i32>::new();
-
-        list.push_front(1);
-
-        assert!(!list.is_empty());
-    }
-
-    #[test]
-    fn test_len_on_empty_list() {
-        let list = LinkedList::<i32>::new();
-
-        assert_eq!(list.len(), 0);
-    }
-
-    #[test]
-    fn test_len_on_non_empty_list() {
-        let mut list = LinkedList::<i32>::new();
-
-        list.push_front(1);
-
-        assert_eq!(list.len(), 1);
-    }
-
-    #[test]
-    fn test_contains_returns_false() {
-        let list = LinkedList::<i32>::new();
-
-        assert!(!list.contains(&1));
-    }
-
-    #[test]
-    fn test_contains_returns_true() {
-        let mut list = LinkedList::<i32>::new();
-
-        list.push_front(1);
-
-        assert!(list.contains(&1));
-    }
-
-    #[test]
-    fn test_front_on_empty_list() {
-        let list = LinkedList::<i32>::new();
-
-        assert!(list.front().is_none());
-    }
-
-    #[test]
-    fn test_front_on_non_empty_list() {
-        let mut list = LinkedList::<i32>::new();
-
-        list.push_back(10);
-
-        assert_eq!(list.front(), Some(&10));
-    }
-
-    #[test]
-    fn test_front_mut_on_empty_list() {
-        let mut list = LinkedList::<i32>::new();
-
-        assert!(list.front_mut().is_none());
-    }
-
-    #[test]
-    fn test_front_mut_on_non_empty_list() {
-        let mut list = LinkedList::<i32>::new();
-
-        list.push_back(10);
-
-        if let Some(element) = list.front_mut() {
-            *element = 20;
+        pub fn new_list<T>() -> LinkedList<T> {
+            LinkedList::<T>::new()
         }
 
-        assert_eq!(list.front(), Some(&20));
-    }
-
-    #[test]
-    fn test_back_on_empty_list() {
-        let list = LinkedList::<i32>::new();
-
-        assert!(list.back().is_none());
-    }
-
-    #[test]
-    fn test_back_on_non_empty_list() {
-        let mut list = LinkedList::<i32>::new();
-
-        list.push_back(10);
-        list.push_back(30);
-
-        assert_eq!(list.back(), Some(&30));
-    }
-
-    #[test]
-    fn test_back_mut_on_empty_list() {
-        let mut list = LinkedList::<i32>::new();
-
-        assert!(list.back_mut().is_none());
-    }
-
-    #[test]
-    fn test_back_mut_on_non_empty_list() {
-        let mut list = LinkedList::<i32>::new();
-
-        list.push_back(10);
-        list.push_back(30);
-
-        if let Some(element) = list.back_mut() {
-            *element = 50;
+        pub fn raw_head<T>(list: &LinkedList<T>) -> &Node<T> {
+            unsafe { list.head.expect("head should be Some").as_ref() }
         }
 
-        assert_eq!(list.back(), Some(&50));
+        pub fn raw_tail<T>(list: &LinkedList<T>) -> &Node<T> {
+            unsafe { list.tail.expect("tail should be Some").as_ref() }
+        }
+
+        pub fn assert_node<T>(node: &Node<T>, prev: bool, next: bool, element: &T)
+        where
+            T: fmt::Debug + PartialEq,
+        {
+            assert_eq!(node.previous.is_some(), prev);
+            assert_eq!(node.next.is_some(), next);
+            assert_eq!(node.element, *element);
+        }
+
+        pub fn assert_empty_list<T>(list: &LinkedList<T>) {
+            assert!(list.head.is_none());
+            assert!(list.tail.is_none());
+            assert_eq!(list.size, 0);
+        }
     }
 
-    #[test]
-    fn test_list_clear() {
-        let mut list = LinkedList::<i32>::new();
+    mod misc {
+        use super::{
+            LinkedList,
+            utils::{assert_empty_list, assert_node, new_list, raw_head, raw_tail},
+        };
 
-        list.push_front(1);
-        list.clear();
+        #[test]
+        fn create_list() {
+            let list = new_list::<i32>();
 
-        assert!(list.head.is_none());
-        assert!(list.tail.is_none());
-        assert_eq!(list.size, 0);
+            assert_empty_list(&list);
+        }
+
+        #[test]
+        fn create_list_using_default() {
+            let list = LinkedList::<i32>::default();
+
+            assert_empty_list(&list);
+        }
+
+        #[test]
+        fn is_empty_returns_true_on_empty_list() {
+            let list = new_list::<i32>();
+
+            assert!(list.is_empty());
+        }
+
+        #[test]
+        fn is_empty_returns_false_on_non_empty_list() {
+            let mut list = new_list();
+
+            list.push_front(1);
+
+            assert!(!list.is_empty());
+        }
+
+        #[test]
+        fn len_returns_zero_on_empty_list() {
+            let list = new_list::<i32>();
+
+            assert_eq!(list.len(), 0);
+        }
+
+        #[test]
+        fn len_returns_grater_than_zero_on_non_empty_list() {
+            let mut list = new_list();
+
+            list.push_front(1);
+
+            assert_eq!(list.len(), 1);
+        }
+
+        #[test]
+        fn contains_returns_false() {
+            let list = new_list();
+
+            assert!(!list.contains(&1));
+        }
+
+        #[test]
+        fn contains_returns_true() {
+            let mut list = new_list();
+
+            list.push_front(1);
+
+            assert!(list.contains(&1));
+        }
+
+        #[test]
+        fn contains_returns_true_on_second_node() {
+            let mut list = new_list();
+
+            list.push_back(1);
+            list.push_back(2);
+
+            assert!(list.contains(&2));
+        }
+
+        #[test]
+        fn contains_returns_false_on_nonexistent_element() {
+            let mut list = new_list();
+
+            list.push_back(1);
+            list.push_back(2);
+            list.push_back(3);
+
+            assert!(!list.contains(&4));
+        }
+
+        #[test]
+        fn front_on_empty_list() {
+            let list = new_list::<i32>();
+
+            assert!(list.front().is_none());
+        }
+
+        #[test]
+        fn front_on_non_empty_list() {
+            let mut list = new_list();
+
+            list.push_back(10);
+
+            assert_eq!(list.front(), Some(&10));
+        }
+
+        #[test]
+        fn front_mut_on_empty_list() {
+            let mut list = new_list::<i32>();
+
+            assert!(list.front_mut().is_none());
+        }
+
+        #[test]
+        fn front_mut_on_non_empty_list() {
+            let mut list = new_list();
+
+            list.push_back(10);
+
+            if let Some(element) = list.front_mut() {
+                *element = 20;
+            }
+
+            assert_eq!(list.front(), Some(&20));
+        }
+
+        #[test]
+        fn back_on_empty_list() {
+            let list = new_list::<i32>();
+
+            assert!(list.back().is_none());
+        }
+
+        #[test]
+        fn back_on_non_empty_list() {
+            let mut list = new_list();
+
+            list.push_back(10);
+            list.push_back(30);
+
+            assert_eq!(list.back(), Some(&30));
+        }
+
+        #[test]
+        fn back_mut_on_empty_list() {
+            let mut list = new_list::<i32>();
+
+            assert!(list.back_mut().is_none());
+        }
+
+        #[test]
+        fn back_mut_on_non_empty_list() {
+            let mut list = new_list();
+
+            list.push_back(10);
+            list.push_back(30);
+
+            if let Some(element) = list.back_mut() {
+                *element = 50;
+            }
+
+            assert_eq!(list.back(), Some(&50));
+        }
+
+        #[test]
+        fn clear_list() {
+            let mut list = new_list();
+
+            list.push_front(1);
+            list.clear();
+
+            assert_empty_list(&list);
+        }
+
+        #[test]
+        fn display_output_on_empty_list() {
+            let list = new_list::<i32>();
+            assert_eq!(format!("{list}"), "[]");
+        }
+
+        #[test]
+        fn display_output_on_non_empty_list() {
+            let mut list = new_list();
+
+            list.push_front(1);
+
+            assert_eq!(format!("{list}"), "[1]");
+
+            list.push_front(2);
+
+            assert_eq!(format!("{list}"), "[2 <-> 1]");
+        }
+
+        #[test]
+        fn reverse_empty_list() {
+            let mut list = new_list::<i32>();
+
+            list.reverse();
+
+            assert_eq!(format!("{list}"), "[]");
+        }
+
+        #[test]
+        fn reverse_list_with_one_element() {
+            let mut list = new_list::<i32>();
+
+            list.push_front(1);
+            list.reverse();
+
+            assert_eq!(format!("{list}"), "[1]");
+        }
+
+        #[test]
+        fn reverse_non_empty_list() {
+            let mut list = new_list();
+
+            list.push_front(1);
+            list.push_front(2);
+            list.push_front(3);
+            list.reverse();
+
+            assert_eq!(format!("{list}"), "[1 <-> 2 <-> 3]");
+
+            list.reverse();
+
+            assert_eq!(format!("{list}"), "[3 <-> 2 <-> 1]");
+        }
+
+        #[test]
+        fn split_list_with_even_size() {
+            let mut list = new_list();
+
+            list.push_back(1);
+            list.push_back(2);
+            list.push_back(3);
+            list.push_back(4);
+
+            let (first_list, second_list) = list.split();
+
+            let head_ref = raw_head(&first_list);
+            let tail_ref = raw_tail(&first_list);
+
+            assert_node(head_ref, false, true, &1);
+            assert_node(tail_ref, true, false, &2);
+
+            assert_eq!(first_list.len(), 2);
+
+            let head_ref = raw_head(&second_list);
+            let tail_ref = raw_tail(&second_list);
+
+            assert_node(head_ref, false, true, &3);
+            assert_node(tail_ref, true, false, &4);
+
+            assert_eq!(second_list.len(), 2);
+        }
+
+        #[test]
+        fn split_list_with_odd_size() {
+            let mut list = new_list();
+
+            list.push_back(1);
+            list.push_back(2);
+            list.push_back(3);
+
+            let (first_list, second_list) = list.split();
+
+            let head_ref = raw_head(&first_list);
+            let tail_ref = raw_tail(&first_list);
+
+            assert_node(head_ref, false, true, &1);
+            assert_node(tail_ref, true, false, &2);
+
+            assert_eq!(first_list.len(), 2);
+
+            let head_ref = raw_head(&second_list);
+            let tail_ref = raw_tail(&second_list);
+
+            assert_node(head_ref, false, false, &3);
+            assert_node(tail_ref, false, false, &3);
+
+            assert_eq!(second_list.len(), 1);
+        }
+
+        #[test]
+        fn retain_list_even_elements() {
+            let mut list = new_list();
+
+            list.push_back(1);
+            list.push_back(2);
+            list.push_back(3);
+            list.push_back(4);
+            list.push_back(5);
+            list.push_back(6);
+            list.retain(|x| x % 2 == 0);
+
+            assert_eq!(format!("{list}"), "[2 <-> 4 <-> 6]");
+        }
+
+        #[test]
+        fn retain_list_odd_elements() {
+            let mut list = new_list();
+
+            list.push_back(1);
+            list.push_back(2);
+            list.push_back(3);
+            list.push_back(4);
+            list.push_back(5);
+            list.push_back(6);
+            list.retain(|x| x % 2 == 1);
+
+            assert_eq!(format!("{list}"), "[1 <-> 3 <-> 5]");
+        }
     }
 
-    #[test]
-    fn test_empty_list_display_output() {
-        let list = LinkedList::<i32>::new();
+    mod push {
+        use super::utils::{assert_node, new_list, raw_head, raw_tail};
 
-        assert_eq!(format!("{list}"), "[]");
+        #[test]
+        fn push_front_one_element() {
+            let mut list = new_list();
+
+            list.push_front(1);
+
+            let head_ref = raw_head(&list);
+            let tail_ref = raw_tail(&list);
+
+            assert_node(head_ref, false, false, &1);
+            assert_node(tail_ref, false, false, &1);
+
+            assert_eq!(list.size, 1);
+        }
+
+        #[test]
+        fn push_front_two_elements() {
+            let mut list = new_list();
+
+            list.push_front(1);
+
+            let head_ref = raw_head(&list);
+            let tail_ref = raw_tail(&list);
+
+            assert_node(head_ref, false, false, &1);
+            assert_node(tail_ref, false, false, &1);
+
+            list.push_front(2);
+
+            let head_ref = raw_head(&list);
+            let tail_ref = raw_tail(&list);
+
+            assert_node(head_ref, false, true, &2);
+            assert_node(tail_ref, true, false, &1);
+
+            assert_eq!(list.size, 2);
+        }
+
+        #[test]
+        fn push_back_one_element() {
+            let mut list = new_list();
+
+            list.push_back(1);
+
+            let head_ref = raw_head(&list);
+            let tail_ref = raw_tail(&list);
+
+            assert_node(head_ref, false, false, &1);
+            assert_node(tail_ref, false, false, &1);
+
+            assert_eq!(list.size, 1);
+        }
+
+        #[test]
+        fn push_back_two_elements() {
+            let mut list = new_list();
+
+            list.push_back(1);
+
+            let head_ref = raw_head(&list);
+            let tail_ref = raw_tail(&list);
+
+            assert_node(head_ref, false, false, &1);
+            assert_node(tail_ref, false, false, &1);
+
+            list.push_back(2);
+
+            let head_ref = raw_head(&list);
+            let tail_ref = raw_tail(&list);
+
+            assert_node(head_ref, false, true, &1);
+            assert_node(tail_ref, true, false, &2);
+
+            assert_eq!(list.size, 2);
+        }
     }
 
-    #[test]
-    fn test_non_empty_list_display_output() {
-        let mut list = LinkedList::<i32>::new();
+    mod pop {
+        use crate::list::tests::utils::assert_empty_list;
 
-        list.push_front(1);
+        use super::utils::{assert_node, new_list, raw_head, raw_tail};
 
-        assert_eq!(format!("{list}"), "[1]");
+        #[test]
+        fn pop_front_empty_list() {
+            let mut list = new_list::<i32>();
 
-        list.push_front(2);
+            assert!(list.pop_front().is_none());
+            assert_eq!(list.size, 0);
+        }
 
-        assert_eq!(format!("{list}"), "[2 <-> 1]");
-    }
+        #[test]
+        fn pop_front_one_element() {
+            let mut list = new_list();
 
-    #[test]
-    fn test_reverse_non_empty_list() {
-        let mut list = LinkedList::<i32>::new();
+            list.push_front(1);
 
-        list.push_front(1);
-        list.push_front(2);
-        list.push_front(3);
-        list.reverse();
+            let popped_element = list.pop_front();
 
-        assert_eq!(format!("{list}"), "[1 <-> 2 <-> 3]");
+            assert_eq!(popped_element, Some(1));
 
-        list.reverse();
+            assert_empty_list(&list);
+        }
 
-        assert_eq!(format!("{list}"), "[3 <-> 2 <-> 1]");
-    }
+        #[test]
+        fn pop_front_two_elements() {
+            let mut list = new_list();
 
-    #[test]
-    fn test_split_list_with_even_size() {
-        let mut list = LinkedList::<i32>::new();
+            list.push_front(1);
+            list.push_front(2);
 
-        list.push_back(1);
-        list.push_back(2);
-        list.push_back(3);
-        list.push_back(4);
+            let first_pop = list.pop_front();
 
-        let (first_list, second_list) = list.split();
+            assert_eq!(first_pop, Some(2));
 
-        let mut head_ref = raw_head(&first_list);
+            let head_ref = raw_head(&list);
+            let tail_ref = raw_tail(&list);
 
-        assert!(head_ref.previous.is_none());
-        assert!(head_ref.next.is_some());
-        assert_eq!(head_ref.element, 1);
+            assert_node(head_ref, false, false, &1);
+            assert_node(tail_ref, false, false, &1);
 
-        assert_eq!(first_list.len(), 2);
+            let second_pop = list.pop_front();
 
-        let mut tail_ref = raw_tail(&first_list);
+            assert_eq!(second_pop, Some(1));
 
-        assert!(tail_ref.previous.is_some());
-        assert!(tail_ref.next.is_none());
-        assert_eq!(tail_ref.element, 2);
+            assert_empty_list(&list);
+        }
 
-        head_ref = raw_head(&second_list);
+        #[test]
+        fn pop_back_empty_list() {
+            let mut list = new_list::<i32>();
 
-        assert!(head_ref.previous.is_none());
-        assert!(head_ref.next.is_some());
-        assert_eq!(head_ref.element, 3);
+            assert!(list.pop_back().is_none());
 
-        tail_ref = raw_tail(&second_list);
+            assert_eq!(list.size, 0);
+        }
 
-        assert!(tail_ref.previous.is_some());
-        assert!(tail_ref.next.is_none());
-        assert_eq!(tail_ref.element, 4);
+        #[test]
+        fn pop_back_one_element() {
+            let mut list = new_list();
 
-        assert_eq!(second_list.len(), 2);
-    }
+            list.push_front(1);
 
-    #[test]
-    fn test_split_list_with_odd_size() {
-        let mut list = LinkedList::<i32>::new();
+            let popped_element = list.pop_back();
 
-        list.push_back(1);
-        list.push_back(2);
-        list.push_back(3);
+            assert_eq!(popped_element, Some(1));
 
-        let (first_list, second_list) = list.split();
+            assert_empty_list(&list);
+        }
 
-        assert_eq!(first_list.len(), 2);
+        #[test]
+        fn pop_back_two_elements() {
+            let mut list = new_list();
 
-        let mut head_ref = raw_head(&first_list);
+            list.push_back(1);
+            list.push_back(2);
 
-        assert!(head_ref.previous.is_none());
-        assert!(head_ref.next.is_some());
-        assert_eq!(head_ref.element, 1);
+            let first_pop = list.pop_back();
 
-        assert_eq!(first_list.len(), 2);
+            assert_eq!(first_pop, Some(2));
 
-        let mut tail_ref = raw_tail(&first_list);
+            let head_ref = raw_head(&list);
+            let tail_ref = raw_tail(&list);
 
-        assert!(tail_ref.previous.is_some());
-        assert!(tail_ref.next.is_none());
-        assert_eq!(tail_ref.element, 2);
+            assert_node(head_ref, false, false, &1);
+            assert_node(tail_ref, false, false, &1);
 
-        head_ref = raw_head(&second_list);
+            let second_pop = list.pop_back();
 
-        assert!(head_ref.previous.is_none());
-        assert!(head_ref.next.is_none());
-        assert_eq!(head_ref.element, 3);
+            assert_eq!(second_pop, Some(1));
 
-        tail_ref = raw_tail(&second_list);
-
-        assert!(tail_ref.previous.is_none());
-        assert!(tail_ref.next.is_none());
-        assert_eq!(tail_ref.element, 3);
-
-        assert_eq!(second_list.len(), 1);
-    }
-
-    #[test]
-    fn test_list_retain_even_elements() {
-        let mut list = LinkedList::<i32>::new();
-
-        list.push_back(1);
-        list.push_back(2);
-        list.push_back(3);
-        list.push_back(4);
-        list.push_back(5);
-        list.push_back(6);
-        list.retain(|x| x % 2 == 0);
-
-        assert_eq!(format!("{list}"), "[2 <-> 4 <-> 6]");
-    }
-
-    #[test]
-    fn test_list_retain_odd_elements() {
-        let mut list = LinkedList::<i32>::new();
-
-        list.push_back(1);
-        list.push_back(2);
-        list.push_back(3);
-        list.push_back(4);
-        list.push_back(5);
-        list.push_back(6);
-        list.retain(|x| x % 2 == 1);
-
-        assert_eq!(format!("{list}"), "[1 <-> 3 <-> 5]");
+            assert_empty_list(&list);
+        }
     }
 }
