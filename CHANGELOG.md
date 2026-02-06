@@ -43,3 +43,16 @@ All notable changes to this project will be documented in this file.
 - Split tests into behavior-based submodules
 - Standardized test naming
 - Added test utilities to reduce duplicated assertions
+
+## [0.5.0] - 2026-02-06
+
+### Added
+
+- Immutable iterator (`iter`)
+- Mutable iterator (`iter_mut`)
+- Consuming iterator (`into_iter`)
+- Implement `IntoIterator` for:
+  - `LinkedList<T>`
+  - `&LinkedList<T>`
+  - `&mut LinkedList<T>`
+- Unit tests covering iterator behavior, mutation and consumption
