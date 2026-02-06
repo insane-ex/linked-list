@@ -37,7 +37,7 @@ All notable changes to this project will be documented in this file.
 
 ## [0.4.1] - 2026-02-05
 
-### Changed
+### Internal
 
 - Refactored tests to improve structure and readability
 - Split tests into behavior-based submodules
@@ -52,6 +52,15 @@ All notable changes to this project will be documented in this file.
 - Mutable iterator (`iter_mut`)
 - Consuming iterator (`into_iter`)
 - Implement `IntoIterator` for:
-  - `LinkedList<T>`
-  - `&LinkedList<T>`
-  - `&mut LinkedList<T>`
+    - `LinkedList<T>`
+    - `&LinkedList<T>`
+    - `&mut LinkedList<T>`
+
+## [0.5.2] - 2026-02-06
+
+### Internal
+
+- Move unit tests to tests.rs
+- Extract trait implementations into traits.rs
+- Add safety documentation to deallocate_node
+- Fix project version from 0.5.0 to 0.5.1
