@@ -44,7 +44,7 @@ All notable changes to this project will be documented in this file.
 - Standardized test naming
 - Added test utilities to reduce duplicated assertions
 
-## [0.5.0] - 2026-02-06
+## [0.5.1] - 2026-02-06
 
 ### Added
 
@@ -55,4 +55,3 @@ All notable changes to this project will be documented in this file.
   - `LinkedList<T>`
   - `&LinkedList<T>`
   - `&mut LinkedList<T>`
-- Unit tests covering iterator behavior, mutation and consumption
