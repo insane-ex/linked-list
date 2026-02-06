@@ -1,5 +1,6 @@
 use std::{
     fmt::{self, Display},
+    marker::PhantomData,
     mem,
     ptr::{self, NonNull},
 };
@@ -8,6 +9,87 @@ use super::{
     node::{Link, Node},
     node_allocator::{allocate_node, deallocate_node},
 };
+
+pub struct ListIter<'a, T> {
+    current: Option<NonNull<Node<T>>>,
+    _marker: PhantomData<&'a T>,
+}
+
+impl<'a, T> Iterator for ListIter<'a, T> {
+    type Item = &'a T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let node = self.current?;
+
+        unsafe {
+            let node_ref = node.as_ref();
+
+            self.current = node_ref.next;
+
+            Some(&node_ref.element)
+        }
+    }
+}
+
+pub struct ListIterMut<'a, T> {
+    current: Option<NonNull<Node<T>>>,
+    _marker: PhantomData<&'a mut T>,
+}
+
+impl<'a, T> Iterator for ListIterMut<'a, T> {
+    type Item = &'a mut T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let mut node = self.current?;
+
+        unsafe {
+            let node_ref = node.as_mut();
+
+            self.current = node_ref.next;
+
+            Some(&mut node_ref.element)
+        }
+    }
+}
+
+pub struct ListIntoIter<T> {
+    list: LinkedList<T>,
+}
+
+impl<T> Iterator for ListIntoIter<T> {
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.list.pop_front()
+    }
+}
+
+impl<T> IntoIterator for LinkedList<T> {
+    type Item = T;
+    type IntoIter = ListIntoIter<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        ListIntoIter { list: self }
+    }
+}
+
+impl<'a, T> IntoIterator for &'a LinkedList<T> {
+    type Item = &'a T;
+    type IntoIter = ListIter<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+impl<'a, T> IntoIterator for &'a mut LinkedList<T> {
+    type Item = &'a mut T;
+    type IntoIter = ListIterMut<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter_mut()
+    }
+}
 
 pub struct LinkedList<T> {
     head: Link<T>,
@@ -237,6 +319,21 @@ impl<T> LinkedList<T> {
             }
 
             current_node = next_node;
+        }
+    }
+
+    #[must_use]
+    pub const fn iter(&self) -> ListIter<'_, T> {
+        ListIter {
+            current: self.head,
+            _marker: PhantomData,
+        }
+    }
+
+    pub const fn iter_mut(&mut self) -> ListIterMut<'_, T> {
+        ListIterMut {
+            current: self.head,
+            _marker: PhantomData,
         }
     }
 }
@@ -801,6 +898,121 @@ mod tests {
             assert_eq!(second_pop, Some(1));
 
             assert_empty_list(&list);
+        }
+    }
+
+    mod iter {
+        use super::utils::new_list;
+
+        #[test]
+        fn iter_should_traverse_in_order() {
+            let mut list = new_list();
+
+            list.push_back(1);
+            list.push_back(2);
+            list.push_back(3);
+
+            let collected: Vec<i32> = list.iter().copied().collect();
+
+            assert_eq!(collected, vec![1, 2, 3]);
+        }
+
+        #[test]
+        fn iter_empty_list() {
+            let list = new_list::<i32>();
+
+            assert!(list.iter().copied().next().is_none());
+        }
+
+        #[test]
+        fn iter_mut_should_modify_elements() {
+            let mut list = new_list();
+
+            list.push_back(1);
+            list.push_back(2);
+            list.push_back(3);
+
+            for x in &mut list {
+                *x *= 2;
+            }
+
+            let collected: Vec<i32> = list.iter().copied().collect();
+
+            assert_eq!(collected, vec![2, 4, 6]);
+        }
+
+        #[test]
+        fn into_iter_should_consume_list() {
+            let mut list = new_list();
+
+            list.push_back(10);
+            list.push_back(20);
+
+            let collected: Vec<i32> = list.into_iter().collect();
+
+            assert_eq!(collected, vec![10, 20]);
+        }
+
+        #[test]
+        fn for_loop_on_ref_list() {
+            let mut list = new_list();
+
+            list.push_back(1);
+            list.push_back(2);
+
+            let mut sum = 0;
+
+            for x in &list {
+                sum += *x;
+            }
+
+            assert_eq!(sum, 3);
+        }
+
+        #[test]
+        fn for_loop_on_mut_ref_list() {
+            let mut list = new_list();
+
+            list.push_back(1);
+            list.push_back(2);
+
+            for x in &mut list {
+                *x += 10;
+            }
+
+            let collected: Vec<i32> = list.iter().copied().collect();
+
+            assert_eq!(collected, vec![11, 12]);
+        }
+
+        #[test]
+        fn for_loop_consuming_list() {
+            let mut list = new_list();
+
+            list.push_back(5);
+            list.push_back(6);
+
+            let mut v = vec![];
+
+            for x in list {
+                v.push(x);
+            }
+
+            assert_eq!(v, vec![5, 6]);
+        }
+
+        #[test]
+        fn partial_iteration() {
+            let mut list = new_list();
+
+            list.push_back(1);
+            list.push_back(2);
+            list.push_back(3);
+
+            let mut iter = list.iter();
+
+            assert_eq!(iter.next(), Some(&1));
+            assert_eq!(iter.next(), Some(&2));
         }
     }
 }
