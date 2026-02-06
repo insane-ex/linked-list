@@ -5,5 +5,9 @@
 mod list;
 mod node;
 mod node_allocator;
+mod traits;
+
+#[cfg(test)]
+mod tests;
 
 pub use list::LinkedList;

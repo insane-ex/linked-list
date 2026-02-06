@@ -21,6 +21,15 @@ pub fn allocate_node<T>(node: Node<T>) -> NonNull<Node<T>> {
     }
 }
 
+/// Deallocates a node previously allocated by `allocate_node`.
+///
+/// # Safety
+///
+/// The caller must ensure that:
+/// - `node` was allocated by `allocate_node` with the same `T`.
+/// - `node` is valid and properly aligned.
+/// - `node` is not used after this call (no dangling references).
+/// - This function is called at most once for the same node.
 pub unsafe fn deallocate_node<T>(node: NonNull<Node<T>>) {
     unsafe { dealloc(node.as_ptr().cast::<u8>(), Layout::new::<Node<T>>()) };
 }
