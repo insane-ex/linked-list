@@ -23,3 +23,7 @@ This is only for educational purposes and to study `unsafe` Rust.
 - Remove a specific node (`remove_node`) – private method
 - Automatically free all elements when going out of scope (`Drop` trait)
 - Print the list (`Display` trait)
+- Immutable iterator (`iter`)
+- Mutable iterator (`iter_mut`)
+- Consuming iterator (`into_iter`)
+- Support for `for` loops via `IntoIterator`
